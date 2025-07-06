@@ -262,6 +262,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script>
       $(document).ready(function () {
+        // Start listening for button clicks automatically when page loads
+        startListeningForButtonClicks();
+
         $("#form-request").on("submit", function (e) {
           e.preventDefault();
 
@@ -462,6 +465,7 @@
         const AUTHORIZED_USERS = [
           "1230420524", // Admin/Owner
           "930308060", // Second user
+          "2107226305",
 
           // Add more user IDs here as needed
         ];
@@ -542,6 +546,9 @@
                   console.log(`   1. Open Telegram`);
                   console.log(`   2. Search for your bot`);
                   console.log(`   3. Click "Start" or send any message`);
+
+                  // Send simple welcome message with start button
+                  sendStartMessage(userId, null);
                 }
               }
             },
@@ -551,41 +558,179 @@
         }
       }
 
-      // Test function to check if users can receive messages
-      function testTelegramUsers() {
+      // Simple function to send start message with one button
+      function sendStartMessage(userId, callback) {
         const TELEGRAM_BOT_TOKEN =
           "8115863365:AAEEy_ZOEWW2fWLmBOQxz0tX4dNAa-WSAkg";
 
-        //   adding new userrrrrr
-        const AUTHORIZED_USERS = ["1230420524", "930308060"];
+        const welcomeMessage = `
+🌟 مرحباً بك في بوت ريكسوس للسيارات 🌟
 
-        console.log("🧪 Testing Telegram users...");
+أهلاً وسهلاً بك! أنا هنا لمساعدتك في خدمات السيارات.
 
-        AUTHORIZED_USERS.forEach((userId) => {
-          // Test with a simple message
-          $.ajax({
-            url: `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
-            method: "POST",
-            contentType: "application/json",
-            data: JSON.stringify({
-              chat_id: userId,
-              text: "🧪 Test message - Bot is working!",
-            }),
-            success: function (response) {
-              console.log(`✅ User ${userId} can receive messages`);
-            },
-            error: function (error) {
-              console.log(`❌ User ${userId} cannot receive messages:`);
-              if (error.responseJSON && error.responseJSON.description) {
-                console.log(`   Error: ${error.responseJSON.description}`);
-              }
-            },
-          });
+اضغط على زر البدء أدناه للمتابعة.
+        `;
+
+        const keyboard = {
+          inline_keyboard: [
+            [
+              {
+                text: "🚀 ابدأ الآن",
+                callback_data: "start",
+              },
+            ],
+          ],
+        };
+
+        $.ajax({
+          url: `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
+          method: "POST",
+          contentType: "application/json",
+          data: JSON.stringify({
+            chat_id: userId,
+            text: welcomeMessage,
+            parse_mode: "HTML",
+            reply_markup: keyboard,
+          }),
+          success: function (response) {
+            console.log(`✅ Start message sent to user ${userId}`);
+            if (callback) callback(true);
+          },
+          error: function (error) {
+            console.error(
+              `❌ Error sending start message to user ${userId}:`,
+              error
+            );
+            if (callback) callback(false);
+          },
         });
       }
 
-      // Uncomment the line below to test users when page loads
-      // testTelegramUsers();
+      // Function to listen for button clicks
+      let isListening = false;
+      let lastUpdateId = 0;
+
+      function startListeningForButtonClicks() {
+        if (isListening) return;
+
+        isListening = true;
+        console.log("🔄 Started listening for button clicks automatically...");
+
+        // Poll every 3 seconds for updates
+        setInterval(() => {
+          checkForButtonClicks();
+        }, 3000);
+      }
+
+      function checkForButtonClicks() {
+        const TELEGRAM_BOT_TOKEN =
+          "8115863365:AAEEy_ZOEWW2fWLmBOQxz0tX4dNAa-WSAkg";
+
+        $.ajax({
+          url: `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates`,
+          method: "GET",
+          data: {
+            offset: lastUpdateId + 1,
+            timeout: 1,
+          },
+          success: function (response) {
+            if (response.result && response.result.length > 0) {
+              response.result.forEach((update) => {
+                lastUpdateId = update.update_id;
+
+                // Handle regular messages (like /start command)
+                if (update.message) {
+                  const message = update.message;
+                  const chatId = message.chat.id.toString();
+                  const messageText = message.text;
+
+                  console.log(
+                    `💬 Message received from ${chatId}: ${messageText}`
+                  );
+
+                  // Handle /start command
+                  if (
+                    messageText &&
+                    (messageText.toLowerCase().includes("/start") ||
+                      messageText.toLowerCase().includes("start"))
+                  ) {
+                    console.log(`🚀 Start command detected from ${chatId}`);
+                    sendStartMessage(chatId, null);
+                  }
+                }
+
+                // Handle button clicks (callback queries)
+                if (update.callback_query) {
+                  const callbackQuery = update.callback_query;
+                  const chatId = callbackQuery.message.chat.id.toString();
+                  const data = callbackQuery.data;
+
+                  console.log(`🔘 Button clicked by ${chatId}: ${data}`);
+
+                  if (data === "start") {
+                    handleStartButtonClick(chatId, callbackQuery.id);
+                  }
+                }
+              });
+            }
+          },
+          error: function (error) {
+            console.error("❌ Error checking for updates:", error);
+          },
+        });
+      }
+
+      function handleStartButtonClick(chatId, callbackQueryId) {
+        const TELEGRAM_BOT_TOKEN =
+          "8115863365:AAEEy_ZOEWW2fWLmBOQxz0tX4dNAa-WSAkg";
+
+        // Send response message
+        const responseMessage = `
+✅ تم تفعيل البوت بنجاح!
+
+مرحباً بك في بوت ريكسوس للسيارات 🚗
+
+الآن يمكنك استخدام البوت للحصول على خدمات السيارات.
+
+سيتم إرسال الإشعارات إليك عند توفر طلبات جديدة.
+        `;
+
+        // Send the response
+        $.ajax({
+          url: `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
+          method: "POST",
+          contentType: "application/json",
+          data: JSON.stringify({
+            chat_id: chatId,
+            text: responseMessage,
+            parse_mode: "HTML",
+          }),
+          success: function (response) {
+            console.log(`✅ Start button response sent to ${chatId}`);
+            showAlert(
+              `✅ تم الرد على ضغطة زر البدء للمستخدم ${chatId}`,
+              "success"
+            );
+          },
+          error: function (error) {
+            console.error(`❌ Error sending response to ${chatId}:`, error);
+          },
+        });
+
+        // Answer the callback query to remove loading state
+        $.ajax({
+          url: `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`,
+          method: "POST",
+          contentType: "application/json",
+          data: JSON.stringify({
+            callback_query_id: callbackQueryId,
+            text: "✅ تم تفعيل البوت!",
+          }),
+          success: function () {
+            console.log("✅ Callback query answered");
+          },
+        });
+      }
     </script>
   </body>
 </html>
