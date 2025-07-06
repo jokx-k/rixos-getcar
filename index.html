@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>فحص التذاكر</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .container {
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        padding: 40px;
+        max-width: 480px;
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .container::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #986f38, #b8834a);
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 32px;
+      }
+
+      .icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+        padding: 20px;
+        background: linear-gradient(135deg, #986f38, #b8834a);
+        border-radius: 50%;
+        display: inline-block;
+        box-shadow: 0 8px 20px rgba(152, 111, 56, 0.3);
+      }
+
+      .header h1 {
+        font-size: 28px;
+        color: #333333;
+        margin-bottom: 8px;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+      }
+
+      .header p {
+        color: #666666;
+        font-size: 16px;
+        line-height: 1.5;
+      }
+
+      .form-group {
+        margin-bottom: 24px;
+      }
+
+      .form-control {
+        width: 100%;
+        padding: 16px 20px;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        font-size: 16px;
+        font-family: inherit;
+        background: #fafbfc;
+        transition: all 0.3s ease;
+        outline: none;
+        color: #333333;
+      }
+
+      .form-control:focus {
+        border-color: #986f38;
+        background: #ffffff;
+        box-shadow: 0 0 0 4px rgba(152, 111, 56, 0.1);
+        transform: translateY(-2px);
+      }
+
+      .form-control::placeholder {
+        color: #999999;
+      }
+
+      .btn {
+        width: 100%;
+        padding: 16px 24px;
+        background: linear-gradient(135deg, #986f38, #b8834a);
+        color: #ffffff;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(152, 111, 56, 0.3);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        transition: left 0.5s;
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(152, 111, 56, 0.4);
+      }
+
+      .btn:hover::before {
+        left: 100%;
+      }
+
+      .btn:active {
+        transform: translateY(0);
+      }
+
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .alert-container {
+        margin-top: 24px;
+        min-height: 60px;
+      }
+
+      .alert {
+        padding: 16px 20px;
+        border-radius: 12px;
+        margin-bottom: 16px;
+        font-weight: 500;
+        animation: slideIn 0.3s ease;
+        border-left: 4px solid;
+      }
+
+      .alert-success {
+        background-color: #d4edda;
+        color: #155724;
+        border-left-color: #28a745;
+      }
+
+      .alert-error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border-left-color: #dc3545;
+      }
+
+      .alert-info {
+        background-color: #cce7ff;
+        color: #004085;
+        border-left-color: #007bff;
+      }
+
+      .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        border-top-color: transparent;
+        animation: spin 1s ease-in-out infinite;
+        margin-right: 8px;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 480px) {
+        .container {
+          padding: 24px;
+          margin: 10px;
+        }
+
+        .header h1 {
+          font-size: 24px;
+        }
+
+        .icon {
+          font-size: 40px;
+          padding: 16px;
+        }
+      }
+
+      /* RTL Support */
+      [dir="rtl"] .loading {
+        margin-right: 0;
+        margin-left: 8px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="header">
+        <div class="icon">🎫</div>
+        <h1>فحص التذاكر</h1>
+        <p>أدخل رقم التذكرة للتحقق من صحتها</p>
+      </div>
+
+      <form id="form-request">
+        <div class="form-group">
+          <input
+            type="text"
+            id="ticketNumber"
+            class="form-control"
+            placeholder="أدخل رقم التذكرة"
+            required
+          />
+        </div>
+        <button type="submit" id="submitBtn" class="btn">فحص التذكرة</button>
+      </form>
+
+      <div id="alertContainer" class="alert-container"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script>
+      $(document).ready(function () {
+        $("#form-request").on("submit", function (e) {
+          e.preventDefault();
+
+          const mondayKey =
+            "eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjQ4NTUyNTY4MiwiYWFpIjoxMSwidWlkIjo3MzMyOTAyMiwiaWFkIjoiMjAyNS0wMy0xNFQwNDoxMDo1Ni4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6MjIyNTg1ODUsInJnbiI6ImV1YzEifQ.-Ap3N_t294IyUg8ZEqEACYvylZjQhOCyYWmHMXPVT1I";
+          const ticketNumber = $("#ticketNumber").val().trim();
+          const submitBtn = $("#submitBtn");
+          const alertContainer = $("#alertContainer");
+          const boardId = 1973910040;
+          const ticketColumnId = "pulse_id_mkrcg1h";
+
+          // Clear previous alerts
+          alertContainer.empty();
+
+          if (!ticketNumber) {
+            showAlert("يرجى إدخال رقم التذكرة", "danger");
+            return;
+          }
+
+          // Add loading state
+          submitBtn
+            .addClass("loading")
+            .prop("disabled", true)
+            .text("جاري الفحص...");
+
+          const query = `
+                                query GetBoardItems {
+                                    boards(ids: ${boardId}) {
+                                        items_page(limit: 500) {
+                                            items {
+                                                id
+                                                name
+                                                column_values {
+                                                    id
+                                                    text
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            `;
+
+          $.ajax({
+            url: "https://api.monday.com/v2",
+            method: "POST",
+            contentType: "application/json",
+            headers: {
+              Authorization: mondayKey,
+            },
+            data: JSON.stringify({ query }),
+            success: function (response) {
+              const items = response.data.boards[0].items_page.items;
+              let foundItem = null;
+
+              items.forEach((item) => {
+                item.column_values.forEach((col) => {
+                  if (
+                    col.id === ticketColumnId &&
+                    col.text &&
+                    col.text.trim() === ticketNumber
+                  ) {
+                    foundItem = item;
+                  }
+                });
+              });
+
+              if (foundItem) {
+                details = "";
+
+                showAlert(
+                  `تذكرة صالحة! رقم التذكرة: ${ticketNumber}`,
+                  "success"
+                );
+
+                // Change status
+
+                const desiredStatusIndex = 1; // 0, 1, 2 etc. based on your status labels
+
+                // Build the mutation with clear formatting
+                const changeStatusQuery = `
+                        mutation ChangeItemStatus {
+                            change_column_value(
+                                board_id: ${boardId},
+                                item_id: ${foundItem.id},
+                                column_id: "color_mkrfsvz3",
+                                value: ${JSON.stringify(
+                                  JSON.stringify({ index: desiredStatusIndex })
+                                )}
+                            ) {
+                                id
+                            }
+                        }
+                    `;
+
+                $.ajax({
+                  url: "https://api.monday.com/v2",
+                  method: "POST",
+                  contentType: "application/json",
+                  headers: {
+                    Authorization: mondayKey,
+                  },
+                  data: JSON.stringify({ query: changeStatusQuery }),
+                  success: function (updateResponse) {
+                    console.log("Status updated:", updateResponse);
+                    showAlert("تم طلب السيارة بنجاح !", "success", details);
+
+                    // Send notification to publisher/service provider
+                    sendPublisherNotification(ticketNumber, foundItem.name);
+
+                    // Send Monday.com notification
+                    $.ajax({
+                      url: "https://api.monday.com/v2",
+                      method: "POST",
+                      contentType: "application/json",
+                      headers: {
+                        Authorization: mondayKey,
+                      },
+                      data: JSON.stringify({
+                        query: `mutation SendNotification{
+                                        create_notification(
+                                            text: "تم طلب السيارة بنجاح ! ${ticketNumber}",
+                                            user_id: 73329022,
+                                            target_id: 1973910040,
+                                            target_type: Project,
+                                        ) { 
+                                            id 
+                                        }
+                                        }`,
+                      }),
+                      success: function (updateResponse) {},
+                      error: function (err) {
+                        console.error(
+                          "Error updating status:",
+                          err.responseText
+                        );
+                        showAlert(
+                          "Ticket found, but failed to update status.",
+                          "warning",
+                          details
+                        );
+                      },
+                    });
+                  },
+                  error: function (err) {
+                    console.error("Error updating status:", err.responseText);
+                    showAlert(
+                      "Ticket found, but failed to update status.",
+                      "warning",
+                      details
+                    );
+                  },
+                });
+
+                submitBtn
+                  .removeClass("loading")
+                  .prop("disabled", false)
+                  .text("فحص التذكرة");
+              } else {
+                showAlert("رقم التذكرة غير صحيح أو منتهي الصلاحية", "danger");
+                // Don't send notification for invalid tickets
+                submitBtn
+                  .removeClass("loading")
+                  .prop("disabled", false)
+                  .text("فحص التذكرة");
+              }
+            },
+            error: function (xhr, status, error) {
+              console.error("Monday API Error:", xhr.responseText);
+              showAlert(
+                "An error occurred while contacting Monday.com.",
+                "danger"
+              );
+            },
+            complete: function () {
+              setLoadingState(false);
+            },
+          });
+        });
+      });
+      function showAlert(message, type) {
+        const alertDiv = $(`<div class="alert alert-${type}">${message}</div>`);
+        $("#alertContainer").html(alertDiv);
+
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+          alertDiv.fadeOut(300, function () {
+            $(this).remove();
+          });
+        }, 5000);
+      }
+
+      function sendPublisherNotification(ticketNumber, customerName) {
+        // Publisher/Service Provider Configuration - Send to specific users only
+        const TELEGRAM_BOT_TOKEN =
+          "8115863365:AAEEy_ZOEWW2fWLmBOQxz0tX4dNAa-WSAkg"; // Your actual bot token
+
+        //   adding new userrrrrr
+        const AUTHORIZED_USERS = [
+          "1230420524", // Admin/Owner
+          "930308060", // Second user
+
+          // Add more user IDs here as needed
+        ];
+
+        // Alternative: Use a private group (uncomment and add your private group ID)
+        // const PRIVATE_GROUP_ID = "-1001234567890"; // Replace with your private group ID
+
+        const timestamp = new Date().toLocaleString("ar-SA");
+
+        // Message for publisher/service provider
+        const publisherMessage =
+          `🚨 طلب سيارة جديد!\n\n` +
+          `🎫 رقم التذكرة: ${ticketNumber}\n` +
+          `⏰ الوقت: ${timestamp}\n\n` +
+          `✅ تم التحقق من صحة التذكرة\n` +
+          `🚗 يرجى تحضير السيارة\n\n` +
+          `#طلب_سيارة #تأكيد_تذكرة`;
+
+        // Send to each authorized user individually
+        AUTHORIZED_USERS.forEach((userId) => {
+          sendPrivateTelegram(userId, publisherMessage);
+        });
+
+        // Alternative: Send to private group (uncomment if using group approach)
+        // sendToPrivateGroup(PRIVATE_GROUP_ID, publisherMessage);
+      }
+
+      function sendPrivateTelegram(userId, message) {
+        const TELEGRAM_BOT_TOKEN =
+          "8115863365:AAEEy_ZOEWW2fWLmBOQxz0tX4dNAa-WSAkg"; // Your token
+
+        console.log(
+          `🚀 Attempting to send private Telegram message to user: ${userId}`
+        );
+        console.log("Message:", message);
+
+        try {
+          $.ajax({
+            url: `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({
+              chat_id: userId,
+              text: message,
+              parse_mode: "HTML",
+            }),
+            success: function (response) {
+              console.log(
+                `✅ Private Telegram notification sent successfully to user ${userId}`
+              );
+              console.log("Response:", response);
+            },
+            error: function (error) {
+              console.error(
+                `❌ Error sending Telegram notification to user ${userId}:`,
+                error
+              );
+              console.error("Full error response:", error);
+
+              // Parse the error response
+              let errorMessage = "Unknown error";
+              if (error.responseJSON && error.responseJSON.description) {
+                errorMessage = error.responseJSON.description;
+                console.log(
+                  `❌ Telegram API Error for user ${userId}: ${errorMessage}`
+                );
+
+                // Check for specific error types
+                if (
+                  errorMessage.includes("chat not found") ||
+                  errorMessage.includes("bot was blocked") ||
+                  errorMessage.includes("user is deactivated")
+                ) {
+                  console.log(
+                    `⚠️  User ${userId} needs to start the bot first or has blocked it`
+                  );
+                  console.log(`📱 Tell user ${userId} to:`);
+                  console.log(`   1. Open Telegram`);
+                  console.log(`   2. Search for your bot`);
+                  console.log(`   3. Click "Start" or send any message`);
+                }
+              }
+            },
+          });
+        } catch (error) {
+          console.error(`❌ Telegram API error for user ${userId}:`, error);
+        }
+      }
+
+      // Test function to check if users can receive messages
+      function testTelegramUsers() {
+        const TELEGRAM_BOT_TOKEN =
+          "8115863365:AAEEy_ZOEWW2fWLmBOQxz0tX4dNAa-WSAkg";
+
+        //   adding new userrrrrr
+        const AUTHORIZED_USERS = ["1230420524", "930308060"];
+
+        console.log("🧪 Testing Telegram users...");
+
+        AUTHORIZED_USERS.forEach((userId) => {
+          // Test with a simple message
+          $.ajax({
+            url: `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({
+              chat_id: userId,
+              text: "🧪 Test message - Bot is working!",
+            }),
+            success: function (response) {
+              console.log(`✅ User ${userId} can receive messages`);
+            },
+            error: function (error) {
+              console.log(`❌ User ${userId} cannot receive messages:`);
+              if (error.responseJSON && error.responseJSON.description) {
+                console.log(`   Error: ${error.responseJSON.description}`);
+              }
+            },
+          });
+        });
+      }
+
+      // Uncomment the line below to test users when page loads
+      // testTelegramUsers();
+    </script>
+  </body>
+</html>
