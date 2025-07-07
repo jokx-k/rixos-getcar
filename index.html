@@ -291,21 +291,25 @@
             .text("جاري الفحص...");
 
           const query = `
-                                query GetBoardItems {
-                                    boards(ids: ${boardId}) {
-                                        items_page(limit: 500) {
-                                            items {
-                                                id
-                                                name
-                                                column_values {
-                                                    id
-                                                    text
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            `;
+            query GetBoardItems {
+                boards(ids: ${boardId}) {
+                  groups(ids: ["topics"]) {
+                    items_page(limit: 500) {
+                        items {
+                            id
+                            name
+                            column_values {
+                                id
+                                text
+                            }
+                        }
+                    }
+                  }
+                }
+            }
+        `;
+
+        
 
           $.ajax({
             url: "https://api.monday.com/v2",
@@ -316,7 +320,8 @@
             },
             data: JSON.stringify({ query }),
             success: function (response) {
-              const items = response.data.boards[0].items_page.items;
+              const items = response.data.boards[0].groups[0].items_page.items;
+              console.dir(items);
               let foundItem = null;
 
               items.forEach((item) => {
@@ -731,6 +736,11 @@
           },
         });
       }
+
+      function setLoadingState(loading) {
+          $('#submitBtn').prop('disabled', loading);
+          $('#ticketNumber').prop('disabled', loading);
+        }
     </script>
   </body>
 </html>
